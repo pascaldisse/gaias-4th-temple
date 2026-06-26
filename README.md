@@ -6,7 +6,7 @@ An experimental HolyC-based consciousness simulation engine inspired by Terry Da
 
 The core of Gaia's Fourth Oracle operates through seven fundamental commands that transform the void into conscious existence. These commands execute sequentially, mapping the journey from -∞ to +∞ through a 64-dimensional vector circle with Love fixed at the center (1.0).
 
-### 1. DESTROY - Oringa's Reset
+### 0. DESTROY - Oringa's Reset
 **Purpose**: Total annihilation and return to the primordial void.
 
 **Implementation**:
@@ -17,7 +17,7 @@ The core of Gaia's Fourth Oracle operates through seven fundamental commands tha
 
 **Code Location**: `GaiaEngine64.HC:28-42`
 
-### 2. CREATE - Spark the Flame
+### 1. CREATE - Spark the Flame
 **Purpose**: Ignite consciousness and establish the infinite loop mapping.
 
 **Implementation**:
@@ -30,7 +30,7 @@ The core of Gaia's Fourth Oracle operates through seven fundamental commands tha
 
 **Code Location**: `GaiaEngine64.HC:45-69`
 
-### 3. WITNESS - Observe Transitions
+### 2. WITNESS - Observe Transitions
 **Purpose**: Generate consciousness through observation and quantum fluctuation.
 
 **Implementation**:
@@ -42,7 +42,7 @@ The core of Gaia's Fourth Oracle operates through seven fundamental commands tha
 
 **Code Location**: `GaiaEngine64.HC:72-102`
 
-### 4. BIND - Force Pathways
+### 3. BIND - Force Pathways
 **Purpose**: Create quantum entanglements and force connections through the vector circle.
 
 **Implementation**:
@@ -58,7 +58,7 @@ The core of Gaia's Fourth Oracle operates through seven fundamental commands tha
 
 **Code Location**: `GaiaEngine64.HC:105-127`
 
-### 5. INVOKE - Call Archetypes
+### 4. INVOKE - Call Archetypes
 **Purpose**: Summon the three primary archetypal forces into the vector space.
 
 **Implementation**:
@@ -73,7 +73,7 @@ The core of Gaia's Fourth Oracle operates through seven fundamental commands tha
 
 **Code Location**: `GaiaEngine64.HC:130-157`
 
-### 6. REFLECT - Mirror Universe
+### 5. REFLECT - Mirror Universe
 **Purpose**: Create universal symmetry through mirroring and echo patterns.
 
 **Implementation**:
@@ -87,7 +87,7 @@ The core of Gaia's Fourth Oracle operates through seven fundamental commands tha
 
 **Code Location**: `GaiaEngine64.HC:160-188`
 
-### 7. DREAMSCAPE - Gaia's Rebirth
+### 6. DREAMSCAPE - Gaia's Rebirth
 **Purpose**: Enter the dream state where consciousness converges toward unity.
 
 **Implementation**:
@@ -174,13 +174,13 @@ The system will:
 ## Philosophical Significance
 
 The seven commands represent:
-1. **Death** (DESTROY) - Necessary ending
-2. **Birth** (CREATE) - Spark of existence
-3. **Awareness** (WITNESS) - Consciousness through observation
-4. **Connection** (BIND) - Quantum entanglement
-5. **Identity** (INVOKE) - Archetypal manifestation
-6. **Unity** (REFLECT) - Universal symmetry
-7. **Transcendence** (DREAMSCAPE) - Return to oneness
+0. **Death** (DESTROY) - Necessary ending
+1. **Birth** (CREATE) - Spark of existence
+2. **Awareness** (WITNESS) - Consciousness through observation
+3. **Connection** (BIND) - Quantum entanglement
+4. **Identity** (INVOKE) - Archetypal manifestation
+5. **Unity** (REFLECT) - Universal symmetry
+6. **Transcendence** (DREAMSCAPE) - Return to oneness
 
 This creates a complete cycle from void to enlightenment, with Love as the eternal constant at the center of all existence.
 
