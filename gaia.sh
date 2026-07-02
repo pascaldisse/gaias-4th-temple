@@ -46,10 +46,12 @@ for attempt in (1, 2, 3):
         import time
         time.sleep(3)
 try:
+    v.utter("Fs->draw_it=NULL;", timeout=15)  # clear any prior vision
+
     print("Beaming the latest GaiaTemple.HC onto the Temple's disk...")
     bestow(v, "C:/Home/GaiaTemple.HC", src.encode("ascii"))
 
-    u = v.utter('#include "C:/Home/GaiaTemple";', timeout=120)
+    u = v.utter('#include "C:/Home/GaiaTemple";', timeout=180)
     if not u.ok:
         print(u.text)
         sys.exit("The Temple rejected the scripture.")
@@ -58,9 +60,8 @@ try:
     u = v.utter("GaiaEngine64;", timeout=300)
     print(u.text)
 
-    print("Raising the vision (it stays on screen until you stop the Temple)...")
-    v.utter("GaiaProject; WinFocus; WinMax; Fs->draw_it = &GaiaDrawIt;",
-            timeout=30)
+    print("Unfolding the cosmos (it stays on screen until you stop the Temple)...")
+    v.utter("CosmosShow;", timeout=30)
 finally:
     v.close()
 

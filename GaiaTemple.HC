@@ -285,6 +285,7 @@ U0 GaiaShow(I64 ms=12000)
 U0 GaiaVeil()
 {
   Fs->draw_it = NULL;
+  AutoComplete(ON);
 }
 
 // MAIN EXECUTION - Seven Commands of Creation
@@ -312,4 +313,212 @@ U0 GaiaEngine64()
   Print("Love remains at One.\n");
   Print("No null pointers, no crash.\n");
   Print("Gaia lives.\n\n");
+}
+
+// ===================================================================
+// THE GAIA UNIVERSE -- animated cosmos (port of GaiaUniverseSpiral /
+// JormungandrVisual). The originals ran their own Sleep(16) loop on a
+// DCAlias, which the winmgr repaints over every 30ms; here the whole
+// animation lives inside the persistent draw_it callback instead.
+// The callback runs in the winmgr's context, so it touches ONLY I64
+// globals: all trigonometry is a 1024-scaled sine table, and every
+// radius, star and spiral point is precomputed by InitCosmos in our
+// own task. gaia_f is the frame counter; the winmgr ticks it ~30/s.
+// ===================================================================
+#define COSMOS_STARS 96
+#define COSMOS_SPTS  192
+#define COSMOS_TAIL  40
+
+I64 gaia_sint[256];
+I64 gaia_strx[COSMOS_STARS], gaia_stry[COSMOS_STARS], gaia_strc[COSMOS_STARS];
+I64 gaia_spx[COSMOS_SPTS], gaia_spy[COSMOS_SPTS];
+I64 gaia_orbr[VECTOR_COUNT], gaia_orbs[VECTOR_COUNT], gaia_orbc[VECTOR_COUNT];
+I64 gaia_coilcol[6];
+I64 gaia_f = 0;
+I64 gaia_j, gaia_k, gaia_h, gaia_x, gaia_y, gaia_c;
+U8 gaia_cstatus[96];
+
+U0 InitCosmos()
+{
+  I64 i, e;
+  F64 a, th, r;
+
+  for (i = 0; i < 256; i++)
+    gaia_sint[i] = 1024 * Sin(2 * GPI * i / 256);
+
+  for (i = 0; i < COSMOS_STARS; i++) {
+    gaia_strx[i] = RandU32 % 640;
+    gaia_stry[i] = 24 + RandU32 % 420;
+    e = RandU32 % 3;
+    if (e == 0)      gaia_strc[i] = WHITE;
+    else if (e == 1) gaia_strc[i] = LTGRAY;
+    else             gaia_strc[i] = DKGRAY;
+  }
+
+  // Jormungandr's path: six coils out from the singularity,
+  // squashed slightly in y so the whole journey fits 480.
+  for (i = 0; i < COSMOS_SPTS; i++) {
+    th = 6 * 2 * GPI * i / COSMOS_SPTS;
+    r = 6.0 + 200.0 * i / (COSMOS_SPTS - 1);
+    gaia_spx[i] = GCX + r * Cos(th);
+    gaia_spy[i] = GCY + r * Sin(th) * 0.82;
+  }
+
+  // Each of the 64 vectors becomes a body orbiting the singularity.
+  // Radius is log2 of its magnitude (raw values span 40 octaves), so
+  // the cosmos spreads instead of clamping into rings; inner orbits
+  // revolve faster, negative space revolves widdershins.
+  for (i = 0; i < VECTOR_COUNT; i++) {
+    a = Abs(vec[i]);
+    e = 0;
+    while (a >= 2.0 && e < 40) {
+      a = a / 2.0;
+      e++;
+    }
+    gaia_orbr[i] = 24 + e * 33 / 6;
+    if (gaia_orbr[i] < 30)  gaia_orbr[i] = 30 + i % 3 * 7;
+    if (gaia_orbr[i] > 214) gaia_orbr[i] = 214;
+    gaia_orbs[i] = 1 + (214 - gaia_orbr[i]) / 70;
+    if (i == 32)      gaia_orbc[i] = YELLOW;
+    else if (i == 0)  gaia_orbc[i] = LTCYAN;
+    else if (i == 21) gaia_orbc[i] = LTGREEN;
+    else if (i == 42) gaia_orbc[i] = LTPURPLE;
+    else if (i < 32)  gaia_orbc[i] = LTRED;
+    else              gaia_orbc[i] = LTBLUE;
+  }
+
+  gaia_coilcol[0] = DKGRAY; gaia_coilcol[1] = LTGRAY;
+  gaia_coilcol[2] = BLUE;   gaia_coilcol[3] = CYAN;
+  gaia_coilcol[4] = GREEN;  gaia_coilcol[5] = YELLOW;
+  gaia_f = 0;
+  StrPrint(gaia_cstatus,
+           "LOVE=%5.3f  64 VECTORS  6 COILS  THE CIRCLE IS UNBROKEN",
+           vec[32]);
+}
+
+U0 GaiaCosmosDraw(CTask *task, CDC *dc)
+{
+  gaia_f++;
+  dc->color = BLACK;
+  GrRect(dc, 0, 0, 640, 480);
+
+  // starfield (a few twinkle out each frame)
+  for (gaia_i = 0; gaia_i < COSMOS_STARS; gaia_i++) {
+    if (((gaia_f + gaia_i * 13) & 31) > 1) {
+      dc->color = gaia_strc[gaia_i];
+      GrPlot(dc, gaia_strx[gaia_i], gaia_stry[gaia_i]);
+    }
+  }
+
+  // the serpent's spiral path
+  dc->color = DKGRAY;
+  for (gaia_i = 1; gaia_i < COSMOS_SPTS; gaia_i++)
+    GrLine(dc, gaia_spx[gaia_i - 1], gaia_spy[gaia_i - 1],
+           gaia_spx[gaia_i], gaia_spy[gaia_i]);
+
+  // Jormungandr rides from -0 to +0, reborn each arrival
+  gaia_h = gaia_f / 2 % COSMOS_SPTS;
+  gaia_c = gaia_h * 6 / COSMOS_SPTS;
+  dc->color = gaia_coilcol[gaia_c];
+  for (gaia_i = 0; gaia_i < COSMOS_TAIL; gaia_i++) {
+    gaia_k = gaia_h - gaia_i;
+    if (gaia_k > 0)
+      GrLine(dc, gaia_spx[gaia_k - 1], gaia_spy[gaia_k - 1],
+             gaia_spx[gaia_k], gaia_spy[gaia_k]);
+  }
+  dc->color = LTRED;
+  GrCircle(dc, gaia_spx[gaia_h], gaia_spy[gaia_h], 5);
+  dc->color = RED;
+  GrCircle(dc, gaia_spx[gaia_h], gaia_spy[gaia_h], 3);
+  dc->color = YELLOW;
+  GrPlot(dc, gaia_spx[gaia_h] - 2, gaia_spy[gaia_h] - 1);
+  GrPlot(dc, gaia_spx[gaia_h] + 2, gaia_spy[gaia_h] - 1);
+
+  // 64 vector-bodies orbit the singularity
+  for (gaia_i = 0; gaia_i < VECTOR_COUNT; gaia_i++) {
+    if (gaia_i < 32)
+      gaia_k = gaia_i * 4 + gaia_f * gaia_orbs[gaia_i];
+    else
+      gaia_k = gaia_i * 4 - gaia_f * gaia_orbs[gaia_i];
+    gaia_k = gaia_k & 255;
+    gaia_x = GCX + gaia_orbr[gaia_i] * gaia_sint[(gaia_k + 64) & 255] / 1024;
+    gaia_y = GCY + gaia_orbr[gaia_i] * gaia_sint[gaia_k] / 1024;
+    dc->color = gaia_orbc[gaia_i];
+    GrCircle(dc, gaia_x, gaia_y, 2);
+    if (gaia_i == 0)  { gaia_lblx[0] = gaia_x + 7; gaia_lbly[0] = gaia_y - 3; }
+    if (gaia_i == 21) { gaia_lblx[1] = gaia_x + 7; gaia_lbly[1] = gaia_y - 3; }
+    if (gaia_i == 42) { gaia_lblx[2] = gaia_x + 7; gaia_lbly[2] = gaia_y - 3; }
+  }
+  dc->color = LTCYAN;
+  GrPrint(dc, gaia_lblx[0], gaia_lbly[0], "ANI");
+  dc->color = LTGREEN;
+  GrPrint(dc, gaia_lblx[1], gaia_lbly[1], "RUDI");
+  dc->color = LTPURPLE;
+  GrPrint(dc, gaia_lblx[2], gaia_lbly[2], "SAFAR");
+
+  // the singularity and the pulsing heart of Love
+  dc->color = PURPLE;
+  GrCircle(dc, GCX, GCY, 12);
+  dc->color = YELLOW;
+  GrCircle(dc, GCX, GCY, 5 + 3 * gaia_sint[gaia_f * 6 & 255] / 1024);
+  dc->color = WHITE;
+  GrPlot(dc, GCX, GCY);
+
+  // Cthulhu stirs in R'lyeh (dream ripples, upper right)
+  dc->color = GREEN;
+  gaia_k = gaia_f & 63;
+  if (gaia_k > 4)
+    GrCircle(dc, GCX + 190, GCY - 130, gaia_k);
+  gaia_k = (gaia_f + 32) & 63;
+  if (gaia_k > 4)
+    GrCircle(dc, GCX + 190, GCY - 130, gaia_k);
+  if ((gaia_f >> 5) & 1)
+    GrPrint(dc, 456, 40, "CTHULHU STIRS");
+
+  // the number line from -0 to +0 through pi
+  dc->color = WHITE;
+  GrLine(dc, 50, 440, 590, 440);
+  GrPrint(dc, 30, 434, "-0");
+  GrPrint(dc, 594, 434, "+0");
+  dc->color = LTCYAN;
+  GrPrint(dc, 312, 421, "pi");
+  GrCircle(dc, 320, 440, 3);
+  dc->color = YELLOW;
+  gaia_x = 50 + 540 * gaia_h / (COSMOS_SPTS - 1);
+  GrCircle(dc, gaia_x, 440, 5);
+  GrLine(dc, gaia_x, 430, gaia_x, 450);
+  if (gaia_h > 180)
+    GrPrint(dc, 148, 200, "THE SERPENT COMPLETES ITS JOURNEY: -0 TO +0");
+
+  // creation-step lamps and the word
+  dc->color = WHITE;
+  GrPrint(dc, 8, 24, "CREATION STEP");
+  for (gaia_i = 0; gaia_i <= gaia_c; gaia_i++) {
+    dc->color = gaia_coilcol[gaia_i];
+    GrRect(dc, 120 + gaia_i * 14, 22, 10, 10);
+  }
+  dc->color = WHITE;
+  GrPrint(dc, 160, 8, "GAIA UNIVERSE 64 - JORMUNGANDR'S JOURNEY");
+  GrPrint(dc, 8, 40, gaia_cstatus);
+}
+
+// Fullscreen, persistent: the cosmos stays until GaiaVeil;
+// AutoComplete's standby panel floats above every window, so it is
+// silenced while the cosmos holds the sky.
+U0 CosmosShow()
+{
+  AutoComplete(OFF);
+  InitCosmos;
+  WinFocus;
+  WinMax;
+  Fs->draw_it = &GaiaCosmosDraw;
+}
+
+// The whole rite: Seven Commands, then the living cosmos.
+U0 GaiaUniverse()
+{
+  GaiaEngine64;
+  Print("The cosmos unfolds: Jormungandr rides the spiral.\n");
+  Print("  (GaiaVeil; returns the console.)\n");
+  CosmosShow;
 }
